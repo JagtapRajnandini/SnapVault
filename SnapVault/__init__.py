@@ -9,6 +9,7 @@ from sqlalchemy.engine import Engine
 
 from SnapVault.config import Config
 
+
 # ── 1. Create the Flask application ──────────────────────────────────────────
 app = Flask(__name__)
 
@@ -61,7 +62,6 @@ from SnapVault.models.reminder import Reminder  # noqa: F401, E402
 
 @login_manager.user_loader
 def load_user(user_id):
-    # Day 1 stub — treats every request as unauthenticated.
     return None
 
 
