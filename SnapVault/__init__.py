@@ -10,28 +10,29 @@ from sqlalchemy.engine import Engine
 from SnapVault.config import Config
 
 
-# ── 1. Create the Flask application ──────────────────────────────────────────
+# Create the Flask application.
 app = Flask(__name__)
 
-# ── 2. Load configuration ─────────────────────────────────────────────────────
+# Load all project settings from config.py.
 app.config.from_object(Config)
 
-# ── 3. Initialise extensions ──────────────────────────────────────────────────
-db = SQLAlchemy(app)
-bcrypt = Bcrypt(app)
-login_manager = LoginManager(app)
+# Initialize Flask extensions.
+db = SQLAlchemy(app)          # Database
+bcrypt = Bcrypt(app)          # Password hashing
+login_manager = LoginManager(app)   # User login management
 
+# Redirect users to the login page if they try to access
+# a protected page without logging in.
 login_manager.login_view = 'login_page'
+
+# Message shown when login is required.
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.login_message_category = 'info'
 
-# ── 4. SQLite foreign-key enforcement ─────────────────────────────────────────
-# SQLite ignores FK constraints by default.  This event listener runs
-# PRAGMA foreign_keys=ON on every new connection so that:
-#   ondelete='CASCADE'  (User -> Document, User -> Reminder)  actually deletes
-#   ondelete='SET NULL' (Document -> Reminder.document_id)    actually nullifies
-# The isinstance guard makes this a no-op for PostgreSQL in a future version.
 
+# SQLite does not check foreign keys by default.
+# This enables foreign key support every time
+# a new database connection is created.
 @event.listens_for(Engine, 'connect')
 def _set_sqlite_pragma(dbapi_connection, connection_record):
     if isinstance(dbapi_connection, _sqlite3.Connection):
@@ -40,40 +41,38 @@ def _set_sqlite_pragma(dbapi_connection, connection_record):
         cursor.close()
 
 
-# ── 5. Import models ──────────────────────────────────────────────────────────
-# noqa comments suppress "imported but unused" linter warnings; these imports
-# are intentional — they register the model classes with SQLAlchemy's metadata.
-from SnapVault.models.user import User          # noqa: F401, E402
-from SnapVault.models.document import Document  # noqa: F401, E402
-from SnapVault.models.reminder import Reminder  # noqa: F401, E402
+# Import models so SQLAlchemy knows about all database tables.
+from SnapVault.models.user import User
+from SnapVault.models.document import Document
+from SnapVault.models.reminder import Reminder
 
-# ── 6. Register user_loader with Flask-Login ──────────────────────────────────
-# Flask-Login requires user_loader to be registered before ANY template that
-# references current_user is rendered — including public pages — because the
-# current_user context processor fires on every single request.
-#
-# Day 1 behaviour: returns None so current_user is always Flask-Login's
-# AnonymousUserMixin (is_authenticated=False).  Correct: no login routes exist.
-#
-# Day 2 change: replace `return None` with:
-#     return User.query.get(int(user_id))
-# AND add UserMixin to the User model class in app/models/user.py so
-# Flask-Login can call .is_authenticated on the returned object.
 
+# Flask-Login calls this function to load the logged-in user.
+#
+# Day 1:
+# No login system exists yet, so always return None.
+#
+# Day 2:
+# Return the User object using its ID.
 @login_manager.user_loader
 def load_user(user_id):
     return None
 
 
-# ── 7. Create database tables ─────────────────────────────────────────────────
-# db.create_all() is idempotent — safe on every startup; skips existing tables.
-# Flask auto-creates the instance/ folder (where SQLite writes app.db).
+# Create all database tables if they don't already exist.
 with app.app_context():
     db.create_all()
 
-# ── 8. Import routes ──────────────────────────────────────────────────────────
-# Must be last to avoid circular imports (routes do `from app import app`).
-from SnapVault.routes import auth_routes  # noqa: F401, E402
-# Day 4: from app.routes import dashboard_routes
-# Day 3: from app.routes import document_routes
-# Day 5: from app.routes import reminder_routes
+
+# Import routes after everything else is ready.
+# Keeping this at the end avoids circular imports.
+from SnapVault.routes import auth_routes
+
+# Day 3:
+# from SnapVault.routes import document_routes
+
+# Day 4:
+# from SnapVault.routes import dashboard_routes
+
+# Day 5:
+# from SnapVault.routes import reminder_routes
