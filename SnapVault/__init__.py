@@ -1,3 +1,12 @@
+# SnapVault/__init__.py
+#
+# Creates the Flask application and sets up everything
+# needed before the application starts.
+#
+# Day 2:
+# - Removed the temporary user_loader from this file.
+# - The real user_loader is now inside models/user.py.
+
 import sqlite3 as _sqlite3
 
 from flask import Flask
@@ -13,26 +22,21 @@ from SnapVault.config import Config
 # Create the Flask application.
 app = Flask(__name__)
 
-# Load all project settings from config.py.
+# Load settings from config.py.
 app.config.from_object(Config)
 
 # Initialize Flask extensions.
-db = SQLAlchemy(app)          # Database
-bcrypt = Bcrypt(app)          # Password hashing
-login_manager = LoginManager(app)   # User login management
+db = SQLAlchemy(app)
+bcrypt = Bcrypt(app)
+login_manager = LoginManager(app)
 
-# Redirect users to the login page if they try to access
-# a protected page without logging in.
+# Login configuration.
 login_manager.login_view = 'login_page'
-
-# Message shown when login is required.
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.login_message_category = 'info'
 
 
-# SQLite does not check foreign keys by default.
-# This enables foreign key support every time
-# a new database connection is created.
+# Enable foreign key support in SQLite.
 @event.listens_for(Engine, 'connect')
 def _set_sqlite_pragma(dbapi_connection, connection_record):
     if isinstance(dbapi_connection, _sqlite3.Connection):
@@ -41,31 +45,20 @@ def _set_sqlite_pragma(dbapi_connection, connection_record):
         cursor.close()
 
 
-# Import models so SQLAlchemy knows about all database tables.
+# Import all database models.
+# Importing user.py also registers the user_loader.
 from SnapVault.models.user import User
 from SnapVault.models.document import Document
 from SnapVault.models.reminder import Reminder
 
 
-# Flask-Login calls this function to load the logged-in user.
-#
-# Day 1:
-# No login system exists yet, so always return None.
-#
-# Day 2:
-# Return the User object using its ID.
-@login_manager.user_loader
-def load_user(user_id):
-    return None
-
-
-# Create all database tables if they don't already exist.
+# Create database tables if they do not already exist.
 with app.app_context():
     db.create_all()
 
 
 # Import routes after everything else is ready.
-# Keeping this at the end avoids circular imports.
+# This avoids circular imports.
 from SnapVault.routes import auth_routes
 
 # Day 3:
