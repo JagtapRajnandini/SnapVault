@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Log In — SnapVault{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-sm-10 col-md-8 col-lg-6 col-xl-5">
+
+        <div class="card shadow-sm border-0 mt-3">
+            <div class="card-body p-4 p-md-5">
+
+                {# ── Heading ───────────────────────────────────────────── #}
+                <h1 class="h4 fw-bold text-center mb-1">Welcome back</h1>
+                <p class="text-center text-muted small mb-4">
+                    Don't have an account?
+                    <a href="{{ url_for('register_page') }}">Create one</a>
+                </p>
+
+                {# ── Login form ────────────────────────────────────────── #}
+                {#
+                  novalidate disables browser HTML5 validation so WTForms
+                  server-side validation is always the authority.
+                #}
+                <form method="POST" action="{{ url_for('login_page') }}" novalidate>
+
+                    {# CSRF token — Flask-WTF requires this on every POST form #}
+                    {{ form.hidden_tag() }}
+
+                    {# ── Username ──────────────────────────────────────── #}
+                    <div class="mb-3">
+                        {{ form.username.label(class="form-label fw-semibold") }}
+                        {{ form.username(
+                               class="form-control" ~ (" is-invalid" if form.username.errors else ""),
+                               id="username",
+                               placeholder="Your username",
+                               autofocus=true
+                           ) }}
+                        {% for error in form.username.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    {# ── Password ──────────────────────────────────────── #}
+                    <div class="mb-4">
+                        {{ form.password.label(class="form-label fw-semibold") }}
+                        {{ form.password(
+                               class="form-control" ~ (" is-invalid" if form.password.errors else ""),
+                               id="password",
+                               placeholder="Your password"
+                           ) }}
+                        {% for error in form.password.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    {# ── Submit ────────────────────────────────────────── #}
+                    <div class="d-grid">
+                        {{ form.submit(
+                               class="btn btn-primary btn-lg",
+                               id="login-submit"
+                           ) }}
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
