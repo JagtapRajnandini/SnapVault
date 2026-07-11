@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}SnapVault — Smart Screenshot Organizer{% endblock %}
+
+{% block content %}
+{#
+  Day 1 placeholder page.
+  On Day 2 this template is no longer rendered: home_page() becomes a
+  redirect (to /login or /dashboard) and home.html can be deleted.
+#}
+
+{# ── Hero section ───────────────────────────────────────────────────────── #}
+<div class="row justify-content-center mt-2">
+    <div class="col-lg-8 col-xl-7 text-center">
+
+        <div class="mb-4">
+            <span class="display-1 text-primary">
+                <i class="bi bi-images"></i>
+            </span>
+        </div>
+
+        <h1 class="display-5 fw-bold mb-3">
+            Smart Screenshot &amp; Image Organizer
+        </h1>
+
+        <p class="lead text-muted mb-5">
+            Upload screenshots and photos. Extract text automatically with
+            OCR. Organize into categories. Search everything. Never lose
+            important information again.
+        </p>
+
+        <div class="d-flex flex-wrap gap-3 justify-content-center mb-5">
+            <a href="{{ url_for('register_page') }}" class="btn btn-primary btn-lg px-5">
+                <i class="bi bi-person-plus me-2"></i>Get Started — It&rsquo;s Free
+            </a>
+            <a href="{{ url_for('login_page') }}" class="btn btn-outline-secondary btn-lg px-5">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+            </a>
+        </div>
+
+    </div>
+</div>
+
+{# ── Feature cards ──────────────────────────────────────────────────────── #}
+<div class="row g-4 justify-content-center mt-2">
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm text-center p-3">
+            <div class="card-body">
+                <div class="fs-1 text-primary mb-3">
+                    <i class="bi bi-fonts"></i>
+                </div>
+                <h5 class="card-title fw-semibold">OCR Text Extraction</h5>
+                <p class="card-text text-muted small">
+                    EasyOCR reads text from every uploaded image automatically.
+                    Bills, notes, tickets, receipts — all become searchable.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm text-center p-3">
+            <div class="card-body">
+                <div class="fs-1 text-success mb-3">
+                    <i class="bi bi-tags"></i>
+                </div>
+                <h5 class="card-title fw-semibold">Auto Classification</h5>
+                <p class="card-text text-muted small">
+                    Images are automatically sorted into categories: Bills,
+                    Receipts, Medical, Study, Tickets, Certificates, and more.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm text-center p-3">
+            <div class="card-body">
+                <div class="fs-1 text-warning mb-3">
+                    <i class="bi bi-search"></i>
+                </div>
+                <h5 class="card-title fw-semibold">Full-Text Search</h5>
+                <p class="card-text text-muted small">
+                    Search by filename, extracted text content, or category.
+                    Find any document in seconds, not minutes.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm text-center p-3">
+            <div class="card-body">
+                <div class="fs-1 text-danger mb-3">
+                    <i class="bi bi-bell"></i>
+                </div>
+                <h5 class="card-title fw-semibold">Reminders</h5>
+                <p class="card-text text-muted small">
+                    Set reminders linked to documents — bill due dates, exam
+                    deadlines, appointment dates. See them on your dashboard.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# ── Category showcase ───────────────────────────────────────────────────── #}
+<div class="row justify-content-center mt-5">
+    <div class="col-lg-10 text-center">
+        <h2 class="h4 fw-semibold mb-3 text-muted">
+            Organizes everything in your gallery
+        </h2>
+        <div class="d-flex flex-wrap gap-2 justify-content-center">
+            {% set demo_categories = [
+                ('Bills', 'danger'),
+                ('Receipts', 'success'),
+                ('Shopping', 'warning'),
+                ('Medical', 'info'),
+                ('Notes', 'secondary'),
+                ('Study', 'primary'),
+                ('Timetables', 'dark'),
+                ('Tickets', 'danger'),
+                ('Certificates', 'success'),
+                ('Miscellaneous', 'secondary'),
+            ] %}
+            {% for name, color in demo_categories %}
+                <span class="badge bg-{{ color }} bg-opacity-10 text-{{ color }} border border-{{ color }} border-opacity-25 px-3 py-2 fs-6">
+                    {{ name }}
+                </span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
