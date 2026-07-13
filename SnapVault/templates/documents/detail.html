@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}{{ document.original_filename }} — SnapVault{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-10 col-xl-9">
+
+        {# ── Breadcrumb navigation ─────────────────────────────────────── #}
+        <nav aria-label="breadcrumb" class="mt-3 mb-3">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('history_page') }}">Document History</a>
+                </li>
+                <li class="breadcrumb-item active text-truncate"
+                    style="max-width: 30ch;"
+                    aria-current="page"
+                    title="{{ document.original_filename }}">
+                    {{ document.original_filename }}
+                </li>
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+
+            {# ═══════════════════════════════════════════════════════════ #}
+            {# Left column — image preview + metadata                     #}
+            {# ═══════════════════════════════════════════════════════════ #}
+            <div class="col-12 col-md-5">
+
+                {# ── Image preview ─────────────────────────────────────── #}
+                {#
+                  The image is served via the authenticated serve_file route.
+                  Direct access to /uploads/ is not possible — every request
+                  passes through the ownership check in document_routes.py.
+                #}
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-body p-2 text-center bg-light rounded">
+                        <img
+                            src="{{ url_for('serve_file',
+                                            user_id=document.user_id,
+                                            filename=document.stored_filename) }}"
+                            alt="{{ document.original_filename }}"
+                            class="img-fluid rounded"
+                            style="max-height: 320px; object-fit: contain;"
+                            id="document-preview-img"
+                        >
+                    </div>
+                </div>
+
+                {# ── View / Download button ────────────────────────────── #}
+                <div class="d-grid mb-3">
+                    <a href="{{ url_for('serve_file',
+                                        user_id=document.user_id,
+                                        filename=document.stored_filename) }}"
+                       class="btn btn-outline-primary btn-sm"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       id="view-original-btn">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>
+                        View Original Image
+                    </a>
+                </div>
+
+                {# ── Metadata card ─────────────────────────────────────── #}
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-3">
+                        <h2 class="h6 fw-bold text-muted text-uppercase mb-3"
+                            style="letter-spacing: .05em; font-size: .7rem;">
+                            Document Info
+                        </h2>
+
+                        <ul class="list-group list-group-flush">
+
+                            {# Filename #}
+                            <li class="list-group-item px-0 py-2 d-flex
+                                        justify-content-between align-items-start">
+                                <span class="text-muted small">
+                                    <i class="bi bi-file-image me-1"></i>Filename
+                                </span>
+                                <span class="text-end small fw-semibold"
+                                      style="max-width: 18ch; word-break: break-all;"
+                                      id="detail-filename">
+                                    {{ document.original_filename }}
+                                </span>
+                            </li>
+
+                            {# Category #}
+                            <li class="list-group-item px-0 py-2 d-flex
+                                        justify-content-between align-items-center">
+                                <span class="text-muted small">
+                                    <i class="bi bi-tag me-1"></i>Category
+                                </span>
+                                <span class="badge rounded-pill bg-primary bg-opacity-10
+                                             text-primary border border-primary border-opacity-25
+                                             fw-normal"
+                                      id="detail-category">
+                                    {{ document.category }}
+                                </span>
+                            </li>
+
+                            {# OCR Status #}
+                            <li class="list-group-item px-0 py-2 d-flex
+                                        justify-content-between align-items-center">
+                                <span class="text-muted small">
+                                    <i class="bi bi-cpu me-1"></i>OCR Status
+                                </span>
+                                {% if document.ocr_status == 'success' %}
+                                    <span class="badge rounded-pill bg-success bg-opacity-10
+                                                 text-success border border-success border-opacity-25
+                                                 fw-normal"
+                                          id="detail-ocr-status">
+                                        <i class="bi bi-check-circle me-1"></i>Success
+                                    </span>
+                                {% elif document.ocr_status == 'failed' %}
+                                    <span class="badge rounded-pill bg-warning bg-opacity-10
+                                                 text-warning border border-warning border-opacity-25
+                                                 fw-normal"
+                                          id="detail-ocr-status">
+                                        <i class="bi bi-exclamation-circle me-1"></i>Failed
+                                    </span>
+                                {% else %}
+                                    <span class="badge rounded-pill bg-secondary bg-opacity-10
+                                                 text-secondary fw-normal"
+                                          id="detail-ocr-status">
+                                        <i class="bi bi-hourglass me-1"></i>Pending
+                                    </span>
+                                {% endif %}
+                            </li>
+
+                            {# File size #}
+                            <li class="list-group-item px-0 py-2 d-flex
+                                        justify-content-between align-items-center">
+                                <span class="text-muted small">
+                                    <i class="bi bi-hdd me-1"></i>File Size
+                                </span>
+                                <span class="small" id="detail-file-size">
+                                    {% if document.file_size %}
+                                        {% if document.file_size < 1024 %}
+                                            {{ document.file_size }} B
+                                        {% elif document.file_size < 1048576 %}
+                                            {{ (document.file_size / 1024) | round(1) }} KB
+                                        {% else %}
+                                            {{ (document.file_size / 1048576) | round(1) }} MB
+                                        {% endif %}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </span>
+                            </li>
+
+                            {# Uploaded date #}
+                            <li class="list-group-item px-0 py-2 d-flex
+                                        justify-content-between align-items-center">
+                                <span class="text-muted small">
+                                    <i class="bi bi-calendar3 me-1"></i>Uploaded
+                                </span>
+                                <span class="small" id="detail-uploaded-at">
+                                    {{ document.created_at.strftime('%d %b %Y, %H:%M') }}
+                                </span>
+                            </li>
+
+                        </ul>
+                    </div>
+                </div>
+
+                {# ── Reminder button (available from Day 5) ────────────── #}
+                {#
+                  The reminder creation route is implemented in Day 5.
+                  The button is rendered as disabled so the layout is
+                  complete without causing a url_for BuildError.
+                #}
+                <div class="d-grid mt-3">
+                    <button class="btn btn-outline-secondary btn-sm"
+                            disabled
+                            title="Reminders are available from Day 5"
+                            id="add-reminder-btn">
+                        <i class="bi bi-bell me-1"></i>
+                        Set a Reminder
+                        <span class="badge bg-secondary ms-1"
+                              style="font-size: .65rem;">Soon</span>
+                    </button>
+                </div>
+
+            </div>
+
+            {# ═══════════════════════════════════════════════════════════ #}
+            {# Right column — OCR text                                    #}
+            {# ═══════════════════════════════════════════════════════════ #}
+            <div class="col-12 col-md-7">
+
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body p-4">
+
+                        <h2 class="h6 fw-bold text-muted text-uppercase mb-3"
+                            style="letter-spacing: .05em; font-size: .7rem;">
+                            <i class="bi bi-text-paragraph me-1"></i>
+                            Extracted Text
+                        </h2>
+
+                        {% if document.ocr_text %}
+                            {#
+                              pre-wrap preserves whitespace and line breaks
+                              from the OCR output. overflow-y: auto limits
+                              the height and adds a scrollbar for long text.
+                              font-size is reduced slightly so more text fits.
+                            #}
+                            <pre class="bg-light rounded p-3 small"
+                                 style="white-space: pre-wrap;
+                                        word-break: break-word;
+                                        max-height: 480px;
+                                        overflow-y: auto;"
+                                 id="ocr-text-block">{{ document.ocr_text }}</pre>
+                        {% else %}
+                            {# Show a friendly message if OCR produced no text #}
+                            <div class="text-center py-5 text-muted">
+                                {% if document.ocr_status == 'failed' %}
+                                    <i class="bi bi-exclamation-circle display-6 d-block mb-2"></i>
+                                    <p class="small mb-0">
+                                        OCR could not extract text from this image.
+                                        The image may be too blurry or contain no readable text.
+                                    </p>
+                                {% else %}
+                                    <i class="bi bi-hourglass display-6 d-block mb-2"></i>
+                                    <p class="small mb-0">
+                                        Text extraction has not run yet.
+                                    </p>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        {# ── Back to history ───────────────────────────────────────────── #}
+        <div class="mt-4 mb-3">
+            <a href="{{ url_for('history_page') }}"
+               class="btn btn-link btn-sm text-muted ps-0"
+               id="back-to-history-link">
+                <i class="bi bi-arrow-left me-1"></i>Back to History
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
