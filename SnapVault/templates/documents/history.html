@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Document History — SnapVault{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-10 col-xl-9">
+
+        {# ── Page heading ──────────────────────────────────────────────── #}
+        <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
+            <h1 class="h4 fw-bold mb-0">
+                <i class="bi bi-clock-history text-primary me-2"></i>
+                Document History
+            </h1>
+            <a href="{{ url_for('upload_page') }}"
+               class="btn btn-primary btn-sm"
+               id="upload-new-btn">
+                <i class="bi bi-cloud-upload me-1"></i>Upload New
+            </a>
+        </div>
+
+        {# ── Search form ───────────────────────────────────────────────── #}
+        {#
+          Search uses GET, not POST, so the query appears in the URL (?q=...).
+          This makes search results bookmarkable and shareable.
+          No CSRF token needed for GET forms.
+        #}
+        <form method="GET"
+              action="{{ url_for('history_page') }}"
+              class="mb-4"
+              id="search-form">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input
+                    type="text"
+                    name="q"
+                    id="search-input"
+                    class="form-control border-start-0 ps-0"
+                    placeholder="Search by filename, text, or category&hellip;"
+                    value="{{ search_query }}"
+                    autocomplete="off"
+                >
+                {% if search_query %}
+                    {# Show a clear button only when a search is active #}
+                    <a href="{{ url_for('history_page') }}"
+                       class="btn btn-outline-secondary"
+                       id="clear-search-btn"
+                       title="Clear search">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                {% endif %}
+                <button type="submit"
+                        class="btn btn-primary"
+                        id="search-submit-btn">
+                    Search
+                </button>
+            </div>
+        </form>
+
+        {# ── Search result summary ─────────────────────────────────────── #}
+        {% if search_query %}
+            <p class="text-muted small mb-3">
+                {% if documents %}
+                    {{ documents|length }} result{{ 's' if documents|length != 1 else '' }}
+                    for &ldquo;<strong>{{ search_query }}</strong>&rdquo;
+                {% else %}
+                    No results for &ldquo;<strong>{{ search_query }}</strong>&rdquo;
+                {% endif %}
+            </p>
+        {% endif %}
+
+        {# ── Document list ─────────────────────────────────────────────── #}
+        {% if documents %}
+
+            <div class="list-group shadow-sm">
+                {% for doc in documents %}
+                <a href="{{ url_for('document_detail_page', doc_id=doc.id) }}"
+                   class="list-group-item list-group-item-action py-3"
+                   id="doc-{{ doc.id }}">
+
+                    <div class="d-flex justify-content-between align-items-start">
+
+                        {# ── Left: filename + metadata ─────────────────── #}
+                        <div class="me-3 overflow-hidden">
+
+                            {# Original filename — truncate long names with CSS #}
+                            <p class="mb-1 fw-semibold text-truncate"
+                               style="max-width: 35ch;"
+                               title="{{ doc.original_filename }}">
+                                <i class="bi bi-file-image text-secondary me-1"></i>
+                                {{ doc.original_filename }}
+                            </p>
+
+                            {# Category and OCR status badges #}
+                            <div class="d-flex flex-wrap gap-1 align-items-center">
+
+                                {# Category badge ─────────────────────────── #}
+                                <span class="badge rounded-pill bg-primary bg-opacity-10
+                                             text-primary border border-primary border-opacity-25
+                                             small fw-normal">
+                                    {{ doc.category }}
+                                </span>
+
+                                {# OCR status badge ───────────────────────── #}
+                                {% if doc.ocr_status == 'success' %}
+                                    <span class="badge rounded-pill bg-success bg-opacity-10
+                                                 text-success border border-success border-opacity-25
+                                                 small fw-normal">
+                                        <i class="bi bi-check-circle me-1"></i>OCR Done
+                                    </span>
+                                {% elif doc.ocr_status == 'failed' %}
+                                    <span class="badge rounded-pill bg-warning bg-opacity-10
+                                                 text-warning border border-warning border-opacity-25
+                                                 small fw-normal">
+                                        <i class="bi bi-exclamation-circle me-1"></i>OCR Failed
+                                    </span>
+                                {% else %}
+                                    {# pending — should not appear after the upload pipeline #}
+                                    <span class="badge rounded-pill bg-secondary bg-opacity-10
+                                                 text-secondary border border-secondary border-opacity-25
+                                                 small fw-normal">
+                                        <i class="bi bi-hourglass me-1"></i>Pending
+                                    </span>
+                                {% endif %}
+
+                            </div>
+                        </div>
+
+                        {# ── Right: date + arrow ───────────────────────── #}
+                        <div class="text-end flex-shrink-0">
+                            <p class="mb-0 text-muted small">
+                                {{ doc.created_at.strftime('%d %b %Y') }}
+                            </p>
+                            <i class="bi bi-chevron-right text-muted mt-1"></i>
+                        </div>
+
+                    </div>
+
+                </a>
+                {% endfor %}
+            </div>
+
+        {% else %}
+
+            {# ── Empty state ───────────────────────────────────────────── #}
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    {% if search_query %}
+                        {# Empty state: search returned no results #}
+                        <i class="bi bi-search display-4 text-muted"></i>
+                        <h2 class="h5 mt-3 mb-1">No documents found</h2>
+                        <p class="text-muted small mb-3">
+                            Try different keywords or
+                            <a href="{{ url_for('history_page') }}">clear the search</a>.
+                        </p>
+                    {% else %}
+                        {# Empty state: user has no documents at all #}
+                        <i class="bi bi-folder2-open display-4 text-muted"></i>
+                        <h2 class="h5 mt-3 mb-1">No documents yet</h2>
+                        <p class="text-muted small mb-3">
+                            Upload your first screenshot or document image
+                            to get started.
+                        </p>
+                        <a href="{{ url_for('upload_page') }}"
+                           class="btn btn-primary"
+                           id="upload-first-btn">
+                            <i class="bi bi-cloud-upload me-1"></i>Upload a Document
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
