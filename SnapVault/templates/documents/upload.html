@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Document — SnapVault{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-sm-10 col-md-8 col-lg-6 col-xl-5">
+
+        <div class="card shadow-sm border-0 mt-3">
+            <div class="card-body p-4 p-md-5">
+
+                {# ── Heading ───────────────────────────────────────────── #}
+                <div class="text-center mb-4">
+                    <i class="bi bi-cloud-upload display-4 text-primary"></i>
+                    <h1 class="h4 fw-bold mt-2 mb-0">Upload a Document</h1>
+                    <p class="text-muted small mt-1">
+                        PNG, JPG, or JPEG &mdash; max 16 MB.
+                        Text will be extracted automatically.
+                    </p>
+                </div>
+
+                {# ── Upload form ───────────────────────────────────────── #}
+                {#
+                  enctype="multipart/form-data" is REQUIRED for file uploads.
+                  Without it, the browser sends only the filename string,
+                  not the actual file content, and Flask receives an empty
+                  FileStorage object — the upload silently fails.
+
+                  novalidate disables browser HTML5 validation so WTForms
+                  server-side validation is always the authority.
+                #}
+                <form method="POST"
+                      action="{{ url_for('upload_page') }}"
+                      enctype="multipart/form-data"
+                      novalidate>
+
+                    {# CSRF token — Flask-WTF requires this on every POST form #}
+                    {{ form.hidden_tag() }}
+
+                    {# ── File input ────────────────────────────────────── #}
+                    <div class="mb-4">
+                        {{ form.file.label(class="form-label fw-semibold") }}
+
+                        {#
+                          form-control renders the file input with Bootstrap styling.
+                          is-invalid adds the red border when the field has errors.
+                        #}
+                        {{ form.file(
+                               class="form-control" ~ (" is-invalid" if form.file.errors else ""),
+                               id="file",
+                               accept=".png,.jpg,.jpeg"
+                           ) }}
+
+                        {# Show each validation error below the input #}
+                        {% for error in form.file.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+
+                        <div class="form-text text-muted">
+                            Supported formats: PNG, JPG, JPEG
+                        </div>
+                    </div>
+
+                    {# ── What happens after upload (info box) ──────────── #}
+                    <div class="alert alert-info alert-sm py-2 px-3 mb-4 small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        After uploading, SnapVault will automatically extract
+                        text using OCR and assign a category to your document.
+                    </div>
+
+                    {# ── Submit ────────────────────────────────────────── #}
+                    <div class="d-grid">
+                        {{ form.submit(
+                               class="btn btn-primary btn-lg",
+                               id="upload-submit"
+                           ) }}
+                    </div>
+
+                </form>
+
+                {# ── Link to history ───────────────────────────────────── #}
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('history_page') }}"
+                       class="text-muted small"
+                       id="view-history-link">
+                        <i class="bi bi-clock-history me-1"></i>
+                        View my document history
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
