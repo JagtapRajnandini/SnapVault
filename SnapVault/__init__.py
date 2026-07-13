@@ -3,9 +3,11 @@
 # Creates the Flask application and sets up everything
 # needed before the application starts.
 #
-# Day 2:
-# - Removed the temporary user_loader from this file.
-# - The real user_loader is now inside models/user.py.
+# Day 2: Removed temporary user_loader stub.
+#        Real user_loader is now inside models/user.py.
+#
+# Day 3: Uncommented document_routes import to activate
+#        upload, history, detail, and serve_file endpoints.
 
 import sqlite3 as _sqlite3
 
@@ -37,6 +39,9 @@ login_manager.login_message_category = 'info'
 
 
 # Enable foreign key support in SQLite.
+# SQLite ignores FK constraints by default — this event listener runs
+# PRAGMA foreign_keys=ON on every new connection so cascade deletes
+# and SET NULL rules defined in the models are actually enforced.
 @event.listens_for(Engine, 'connect')
 def _set_sqlite_pragma(dbapi_connection, connection_record):
     if isinstance(dbapi_connection, _sqlite3.Connection):
@@ -46,23 +51,25 @@ def _set_sqlite_pragma(dbapi_connection, connection_record):
 
 
 # Import all database models.
-# Importing user.py also registers the user_loader.
-from SnapVault.models.user import User
-from SnapVault.models.document import Document
-from SnapVault.models.reminder import Reminder
+# Importing user.py also registers the @login_manager.user_loader callback
+# defined at the bottom of that module.
+from SnapVault.models.user import User          # noqa: F401, E402
+from SnapVault.models.document import Document  # noqa: F401, E402
+from SnapVault.models.reminder import Reminder  # noqa: F401, E402
 
 
 # Create database tables if they do not already exist.
+# db.create_all() is idempotent — safe to call on every startup.
 with app.app_context():
     db.create_all()
 
 
 # Import routes after everything else is ready.
-# This avoids circular imports.
-from SnapVault.routes import auth_routes
-
-# Day 3:
-# from SnapVault.routes import document_routes
+# Routes must be imported last to avoid circular imports —
+# route files do "from SnapVault import app" which requires
+# the app object to already exist before the import runs.
+from SnapVault.routes import auth_routes      # noqa: F401, E402
+from SnapVault.routes import document_routes  # noqa: F401, E402  ← Day 3
 
 # Day 4:
 # from SnapVault.routes import dashboard_routes
