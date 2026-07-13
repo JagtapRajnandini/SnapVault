@@ -8,8 +8,6 @@
 # at module level — the first time this module is imported. All subsequent
 # calls to extract_text() reuse the same Reader instance.
 #
-# Blueprint reference: Part 4 → app/services/ocr_service.py
-# Day 3 Phase 4.
 
 import easyocr
 
