@@ -1,5 +1,4 @@
-
-from SnapVault.routes.auth_routes import *
-from SnapVault.routes.dashboard_routes import *
-from SnapVault.routes.document_routes import *
-from SnapVault.routes.reminder_routes import *
+# SnapVault/routes/__init__.py
+# This file intentionally left empty.
+# Routes are imported individually in SnapVault/__init__.py
+# to control import order and avoid double-registration.
