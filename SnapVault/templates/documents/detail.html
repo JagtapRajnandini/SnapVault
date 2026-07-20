@@ -24,7 +24,7 @@
         <div class="row g-4">
 
             {# ═══════════════════════════════════════════════════════════ #}
-            {# Left column — image preview + metadata                     #}
+            {# Left column — image preview + metadata + actions           #}
             {# ═══════════════════════════════════════════════════════════ #}
             <div class="col-12 col-md-5">
 
@@ -150,13 +150,17 @@
                             </li>
 
                             {# Uploaded date #}
+                            {#
+                              FIXED: was document.created_at (wrong column name).
+                              The Document model defines this column as 'uploaded_at'.
+                            #}
                             <li class="list-group-item px-0 py-2 d-flex
                                         justify-content-between align-items-center">
                                 <span class="text-muted small">
                                     <i class="bi bi-calendar3 me-1"></i>Uploaded
                                 </span>
                                 <span class="small" id="detail-uploaded-at">
-                                    {{ document.created_at.strftime('%d %b %Y, %H:%M') }}
+                                    {{ document.uploaded_at.strftime('%d %b %Y, %H:%M') }}
                                 </span>
                             </li>
 
@@ -164,13 +168,10 @@
                     </div>
                 </div>
 
-                {# ── Reminder button (available from Day 5) ────────────── #}
-                {#
-                  The reminder creation route is implemented in Day 5.
-                  The button is rendered as disabled so the layout is
-                  complete without causing a url_for BuildError.
-                #}
-                <div class="d-grid mt-3">
+                {# ── Action buttons ────────────────────────────────────── #}
+                <div class="d-grid gap-2 mt-3">
+
+                    {# Reminder button — stays disabled until Day 5 #}
                     <button class="btn btn-outline-secondary btn-sm"
                             disabled
                             title="Reminders are available from Day 5"
@@ -180,8 +181,38 @@
                         <span class="badge bg-secondary ms-1"
                               style="font-size: .65rem;">Soon</span>
                     </button>
-                </div>
 
+                    {# ── Delete button ─────────────────────────────────── #}
+                    {#
+                      The delete action is a POST form, NOT a plain link.
+                      Using a link (<a href="/document/5/delete">) would be
+                      a security flaw — a malicious email containing
+                      <img src="/document/5/delete"> would silently delete
+                      documents every time a logged-in user opened that email.
+
+                      POST requires the browser to make an intentional form
+                      submission, not a passive GET request.
+
+                      delete_form.hidden_tag() renders the hidden CSRF token:
+                        <input type="hidden" name="csrf_token" value="...">
+                      Flask-WTF validates this token in the delete route's
+                      validate_on_submit() call and rejects any request
+                      that does not carry a valid token.
+
+                      data-bs-toggle="modal" triggers Bootstrap's confirm
+                      dialog before the form is submitted — gives the user
+                      a chance to cancel before the irreversible action runs.
+                    #}
+                    <button type="button"
+                            class="btn btn-outline-danger btn-sm"
+                            id="delete-trigger-btn"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteConfirmModal">
+                        <i class="bi bi-trash me-1"></i>
+                        Delete Document
+                    </button>
+
+                </div>
             </div>
 
             {# ═══════════════════════════════════════════════════════════ #}
@@ -199,12 +230,6 @@
                         </h2>
 
                         {% if document.ocr_text %}
-                            {#
-                              pre-wrap preserves whitespace and line breaks
-                              from the OCR output. overflow-y: auto limits
-                              the height and adds a scrollbar for long text.
-                              font-size is reduced slightly so more text fits.
-                            #}
                             <pre class="bg-light rounded p-3 small"
                                  style="white-space: pre-wrap;
                                         word-break: break-word;
@@ -212,7 +237,6 @@
                                         overflow-y: auto;"
                                  id="ocr-text-block">{{ document.ocr_text }}</pre>
                         {% else %}
-                            {# Show a friendly message if OCR produced no text #}
                             <div class="text-center py-5 text-muted">
                                 {% if document.ocr_status == 'failed' %}
                                     <i class="bi bi-exclamation-circle display-6 d-block mb-2"></i>
@@ -247,4 +271,88 @@
 
     </div>
 </div>
+
+
+{# ══════════════════════════════════════════════════════════════════════════ #}
+{# Delete Confirmation Modal                                                  #}
+{#                                                                            #}
+{# A Bootstrap modal dialog that asks the user to confirm deletion.           #}
+{# The "Delete" button inside the modal submits the hidden POST form.         #}
+{# The "Cancel" button closes the modal — no action is taken.                 #}
+{#                                                                            #}
+{# Why a modal?                                                               #}
+{#   Deletion is irreversible. A confirmation step prevents accidental clicks.#}
+{#   The form action only fires after the user explicitly confirms.           #}
+{# ══════════════════════════════════════════════════════════════════════════ #}
+
+<div class="modal fade"
+     id="deleteConfirmModal"
+     tabindex="-1"
+     aria-labelledby="deleteConfirmModalLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+
+            <div class="modal-header border-0 pb-0">
+                <h3 class="modal-title h5 fw-bold" id="deleteConfirmModalLabel">
+                    <i class="bi bi-trash text-danger me-2"></i>
+                    Delete Document?
+                </h3>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body pt-2">
+                <p class="text-muted small mb-1">
+                    You are about to permanently delete:
+                </p>
+                <p class="fw-semibold mb-3">
+                    <i class="bi bi-file-image text-secondary me-1"></i>
+                    {{ document.original_filename }}
+                </p>
+                <div class="alert alert-danger py-2 px-3 small mb-0">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    This action cannot be undone. The file and all extracted
+                    text will be permanently removed.
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+
+                {# Cancel — closes modal, no action taken #}
+                <button type="button"
+                        class="btn btn-secondary btn-sm"
+                        data-bs-dismiss="modal"
+                        id="cancel-delete-btn">
+                    Cancel
+                </button>
+
+                {#
+                  The actual delete form.
+                  action points to the POST-only delete_document_page route.
+                  delete_form.hidden_tag() embeds the CSRF token.
+                  Submitting this form is the only way to trigger deletion.
+                #}
+                <form method="POST"
+                      action="{{ url_for('delete_document_page',
+                                         doc_id=document.id) }}"
+                      id="delete-confirm-form">
+                    {{ delete_form.hidden_tag() }}
+                    <button type="submit"
+                            class="btn btn-danger btn-sm"
+                            id="confirm-delete-btn">
+                        <i class="bi bi-trash me-1"></i>
+                        Yes, Delete Permanently
+                    </button>
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
 {% endblock %}
