@@ -8,6 +8,9 @@
 #
 # Day 3: Uncommented document_routes import to activate
 #        upload, history, detail, and serve_file endpoints.
+#
+# Day 4: Uncommented dashboard_routes import to activate
+#        the real dashboard_page (replaces the stub).
 
 import sqlite3 as _sqlite3
 
@@ -69,10 +72,8 @@ with app.app_context():
 # route files do "from SnapVault import app" which requires
 # the app object to already exist before the import runs.
 from SnapVault.routes import auth_routes      # noqa: F401, E402
-from SnapVault.routes import document_routes  # noqa: F401, E402  ← Day 3
-
-# Day 4:
-# from SnapVault.routes import dashboard_routes
+from SnapVault.routes import document_routes  # noqa: F401, E402
+from SnapVault.routes import dashboard_routes  # noqa: F401, E402  ← Day 4
 
 # Day 5:
 # from SnapVault.routes import reminder_routes
