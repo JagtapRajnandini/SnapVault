@@ -18,6 +18,7 @@ from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
@@ -34,6 +35,7 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
+csrf = CSRFProtect(app)
 
 # Login configuration.
 login_manager.login_view = 'login_page'
@@ -66,6 +68,17 @@ from SnapVault.models.reminder import Reminder  # noqa: F401, E402
 with app.app_context():
     db.create_all()
 
+from flask import render_template as _rt
+
+@app.errorhandler(404)
+def not_found_error(e):
+    return _rt('errors/404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    db.session.rollback()
+    return _rt('errors/500.html'), 500
+
 
 # Import routes after everything else is ready.
 # Routes must be imported last to avoid circular imports —
@@ -76,4 +89,4 @@ from SnapVault.routes import document_routes  # noqa: F401, E402
 from SnapVault.routes import dashboard_routes  # noqa: F401, E402  ← Day 4
 
 # Day 5:
-# from SnapVault.routes import reminder_routes
+from SnapVault.routes import reminder_routes
