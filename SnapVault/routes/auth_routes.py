@@ -4,6 +4,7 @@
 # Home, Register, Login, Logout, and Profile.
 
 from flask import flash, redirect, render_template, request, url_for
+from urllib.parse import urlparse
 from flask_login import current_user, login_required, login_user, logout_user
 
 from SnapVault import app, bcrypt, db
@@ -87,9 +88,12 @@ def login_page():
             flash('Logged in successfully.', 'success')
 
             # If the user was redirected here from a protected page,
-            # return them to that page after login.
             next_page = request.args.get('next')
+            # Reject external URLs — only allow relative paths (no netloc).
+            if next_page and urlparse(next_page).netloc != '':
+                next_page = None
             return redirect(next_page or url_for('dashboard_page'))
+            
 
         else:
             flash('Username and password do not match. Please try again.', 'danger')
@@ -102,13 +106,11 @@ def login_page():
 # ---------------------------------------------------------------------------
 # Logs out the current user and returns them to the login page.
 
-@app.route('/logout')
+@app.route('/logout', methods=['POST'])
+@login_required
 def logout_page():
-
     logout_user()
-
     flash('You have been logged out.', 'info')
-
     return redirect(url_for('login_page'))
 
 
