@@ -39,6 +39,7 @@ CATEGORIES: list[str] = [
 # The category with the highest number of matches is selected.
 # If no keywords match, the document is classified as "Miscellaneous".
 CATEGORY_KEYWORDS: dict[str, list[str]] = {
+
     "Bills": [
         "bill",
         "invoice",
@@ -57,6 +58,7 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
         "subscription",
         "balance due",
     ],
+
     "Medical": [
         "prescription",
         "diagnosis",
@@ -79,6 +81,7 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
         "ml",
         "dr.",
     ],
+
     "Education": [
         "result",
         "marks",
@@ -100,6 +103,7 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
         "syllabus",
         "attendance",
     ],
+
     "Finance": [
         "bank",
         "account",
@@ -123,9 +127,11 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
         "mutual fund",
         "insurance",
     ],
+
     "Travel": [
         "ticket",
         "boarding",
+        "boarding pass",
         "flight",
         "train",
         "bus",
@@ -142,17 +148,31 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
         "e-ticket",
         "platform",
         "coach",
+        # Common airline names & terms:
+        "airline",
+        "airways",
+        "ryanair",
+        "indigo",
+        "emirates",
+        "lufthansa",
+        "airport",
+        "terminal",
+        "gate",
+        "beszallokartya",  # International boarding pass
     ],
+
     "Food": [
         "restaurant",
-        "order",
         "food",
         "delivery",
         "menu",
         "swiggy",
         "zomato",
-        "receipt",
-        "table",
+        "table no",
+        "table number",
+        "table #",
+        "dine in",
+        "dine-in",
         "bill total",
         "gst",
         "tip",
@@ -160,7 +180,14 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
         "cuisine",
         "takeaway",
         "cafe",
+        "bar",
+        "coffee",
+        "latte",
+        "snack",
+        "beverage",
+        "drinks",
     ],
+
     "Shopping": [
         "order id",
         "shipped",
@@ -173,6 +200,7 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
         "quantity",
         "price",
         "discount",
+        "disc",
         "coupon",
         "refund",
         "return",
@@ -180,12 +208,23 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
         "checkout",
         "tracking",
         "invoice no",
+        "receipt",
+        "retail",
+        "wholesale",
+        "cashier",
+        "store",
+        "shop",
+        "qty",
     ],
     "Certificates": [
         "certificate",
+        "award",
         "awarded",
-        "completion",
+        "honor",
+        "honour",
+        "recognition",
         "achievement",
+        "completion",
         "this is to certify",
         "certified",
         "issued",
@@ -196,7 +235,10 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
         "internship certificate",
         "course completion",
         "participation",
+        "felicitation",
+        "excellence",
     ],
-    # Default fallback category.
+
+    "Miscellaneous": [],   # Default fallback — no keywords needed.
     # "Miscellaneous" is the default category when no keywords match.
 }
