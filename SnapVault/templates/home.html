@@ -113,17 +113,16 @@
             Organizes everything in your gallery
         </h2>
         <div class="d-flex flex-wrap gap-2 justify-content-center">
-            {% set demo_categories = [
-                ('Bills', 'danger'),
-                ('Receipts', 'success'),
-                ('Shopping', 'warning'),
-                ('Medical', 'info'),
-                ('Notes', 'secondary'),
-                ('Study', 'primary'),
-                ('Timetables', 'dark'),
-                ('Tickets', 'danger'),
-                ('Certificates', 'success'),
-                ('Miscellaneous', 'secondary'),
+                       {% set demo_categories = [
+                ('Bills',          'warning'),
+                ('Medical',        'danger'),
+                ('Education',      'info'),
+                ('Finance',        'success'),
+                ('Travel',         'primary'),
+                ('Food',           'warning'),
+                ('Shopping',       'secondary'),
+                ('Certificates',   'success'),
+                ('Miscellaneous',  'secondary'),
             ] %}
             {% for name, color in demo_categories %}
                 <span class="badge bg-{{ color }} bg-opacity-10 text-{{ color }} border border-{{ color }} border-opacity-25 px-3 py-2 fs-6">
