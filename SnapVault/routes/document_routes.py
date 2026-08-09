@@ -113,10 +113,11 @@ def upload_page():
 
         # ── Save the file to disk ─────────────────────────────────────────
         try:
-            file_info = save_file(
+                file_info = save_file(
                 file_storage=file,
                 user_id=current_user.id,
                 upload_folder=app.config['UPLOAD_FOLDER'],
+                file_hash=file_hash,
             )
         except ValueError as e:
             flash(str(e), 'danger')
