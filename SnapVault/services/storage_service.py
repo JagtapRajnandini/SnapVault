@@ -136,7 +136,7 @@ def get_user_upload_folder(upload_folder: str, user_id: int) -> str:
 # Save file to disk
 # ---------------------------------------------------------------------------
 
-def save_file(file_storage, user_id: int, upload_folder: str) -> dict:
+def save_file(file_storage, user_id: int, upload_folder: str, file_hash: str | None = None) -> dict:    
     """
     Run the full file-save pipeline and return metadata about the saved file.
 
@@ -169,6 +169,12 @@ def save_file(file_storage, user_id: int, upload_folder: str) -> dict:
     original_filename = secure_filename(file_storage.filename)
 
     # ── Step 2: Extract the file extension ───────────────────────────────────
+    # Guard against filenames with no extension (secure_filename can produce these).
+    if '.' not in original_filename:
+        raise ValueError(
+            "The uploaded file has no valid extension. "
+            "Only PNG, JPG, and JPEG files are accepted."
+        )
     ext = original_filename.rsplit('.', 1)[1].lower()
 
     # ── Step 3: Generate a UUID-based stored filename ─────────────────────────
@@ -180,8 +186,8 @@ def save_file(file_storage, user_id: int, upload_folder: str) -> dict:
     # ── Step 4: Compute the SHA-256 hash ──────────────────────────────────────
     # Done BEFORE saving so the caller can reject duplicates without
     # writing anything to disk. The stream is reset after reading.
-    file_hash = compute_hash(file_storage.stream)
-
+    if file_hash is None:
+        file_hash = compute_hash(file_storage.stream)
     # ── Step 5: Get/create the user's upload subfolder ───────────────────────
     user_folder = get_user_upload_folder(upload_folder, user_id)
 
