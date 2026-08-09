@@ -95,4 +95,5 @@ class User(UserMixin, db.Model):
 def load_user(user_id):
     # Flask-Login calls this after a user logs in.
     # It loads the user from the database using the stored user ID.
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
+    
