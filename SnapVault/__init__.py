@@ -2,15 +2,6 @@
 #
 # Creates the Flask application and sets up everything
 # needed before the application starts.
-#
-# Day 2: Removed temporary user_loader stub.
-#        Real user_loader is now inside models/user.py.
-#
-# Day 3: Uncommented document_routes import to activate
-#        upload, history, detail, and serve_file endpoints.
-#
-# Day 4: Uncommented dashboard_routes import to activate
-#        the real dashboard_page (replaces the stub).
 
 import sqlite3 as _sqlite3
 
@@ -68,6 +59,8 @@ from SnapVault.models.reminder import Reminder  # noqa: F401, E402
 with app.app_context():
     db.create_all()
 
+
+# Custom error handlers for 404 and 500 errors.
 from flask import render_template as _rt
 
 @app.errorhandler(404)
@@ -86,7 +79,5 @@ def internal_error(e):
 # the app object to already exist before the import runs.
 from SnapVault.routes import auth_routes      # noqa: F401, E402
 from SnapVault.routes import document_routes  # noqa: F401, E402
-from SnapVault.routes import dashboard_routes  # noqa: F401, E402  ← Day 4
-
-# Day 5:
-from SnapVault.routes import reminder_routes
+from SnapVault.routes import dashboard_routes  # noqa: F401, E402
+from SnapVault.routes import reminder_routes   # noqa: F401, E402
