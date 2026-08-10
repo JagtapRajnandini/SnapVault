@@ -8,13 +8,6 @@
 #
 # Every route that touches a Document verifies ownership so that
 # User A can never access User B's documents (IDOR protection).
-#
-# Day 3: upload_page, history_page, document_detail_page, serve_file
-# Day 4: DeleteForm, delete_document_page (new)
-#         document_detail_page updated to pass delete_form.
-#
-# Blueprint reference: Part 4 → app/routes/document_routes.py
-#                      Part 6.2 Route Map
 
 import os
 
@@ -34,6 +27,7 @@ from SnapVault.services.storage_service import (
     delete_file,
     save_file,
 )
+from SnapVault.utils.constants import CATEGORIES
 
 
 # ---------------------------------------------------------------------------
@@ -45,10 +39,6 @@ from SnapVault.services.storage_service import (
 # FlaskForm automatically embeds a hidden CSRF token when you call
 # {{ delete_form.hidden_tag() }} in the template.
 # When the form is submitted, validate_on_submit() verifies that token.
-#
-# Why not a plain POST with a manual CSRF token?
-# Using FlaskForm is the idiomatic Flask-WTF pattern and keeps
-# validation consistent with every other form in the project.
 
 class DeleteForm(FlaskForm):
     """Minimal CSRF-protected form for the document delete endpoint."""
@@ -83,10 +73,6 @@ def upload_page():
         file = form.file.data  # FileStorage object from Flask-WTF
 
         # ── Layer 2 extension check ───────────────────────────────────────
-        # FileAllowed in the form (Layer 1) validates the extension by name.
-        # allowed_extension() here is Layer 2 — it also strips path
-        # components and lowercases, so it catches edge cases the form
-        # validator may miss.
         if not allowed_extension(file.filename):
             flash(
                 'Invalid file type. Only PNG, JPG, and JPEG are accepted.',
@@ -113,7 +99,7 @@ def upload_page():
 
         # ── Save the file to disk ─────────────────────────────────────────
         try:
-                file_info = save_file(
+            file_info = save_file(
                 file_storage=file,
                 user_id=current_user.id,
                 upload_folder=app.config['UPLOAD_FOLDER'],
@@ -172,9 +158,11 @@ def history_page():
     Display all documents uploaded by the current user.
     Supports full-text search via ?q= query parameter across
     original_filename, ocr_text, and category columns.
+    Supports category filtering via ?category= query parameter.
     Results are ordered newest-first (uploaded_at DESC).
     """
     q = request.args.get('q', '').strip()
+    selected_category = request.args.get('category', '').strip()
 
     base_query = Document.query.filter_by(user_id=current_user.id)
 
@@ -188,13 +176,17 @@ def history_page():
             )
         )
 
-    # NOTE: The Document model uses 'uploaded_at' as the timestamp column name.
+    if selected_category:
+        base_query = base_query.filter_by(category=selected_category)
+
     documents = base_query.order_by(Document.uploaded_at.desc()).all()
 
     return render_template(
         'documents/history.html',
         documents=documents,
         search_query=q,
+        selected_category=selected_category,
+        categories=CATEGORIES,
     )
 
 
@@ -212,16 +204,14 @@ def document_detail_page(doc_id):
     first_or_404() returns 404 if no matching row exists — this covers
     the case where doc_id belongs to a different user.
 
-    Day 4 addition: a DeleteForm instance is passed to the template so
-    the delete button can render a CSRF-protected POST form.
+    A DeleteForm instance is passed to the template so the delete
+    button can render a CSRF-protected POST form.
     """
     doc = Document.query.filter_by(
         id=doc_id,
         user_id=current_user.id,
     ).first_or_404()
 
-    # Create a blank DeleteForm — it has no fields, only a CSRF token.
-    # The template calls {{ delete_form.hidden_tag() }} to embed the token.
     delete_form = DeleteForm()
 
     return render_template(
@@ -242,62 +232,28 @@ def delete_document_page(doc_id):
     Delete a document: removes the database row and the file from disk.
 
     POST-only: GET requests return 405 Method Not Allowed automatically.
-    This prevents CSRF via embedded image tags or link prefetching.
-
     IDOR protection: filter_by includes both id AND user_id.
-    A user can only delete their own documents.
-    first_or_404() prevents leaking whether a document exists.
-
-    CSRF protection: validate_on_submit() checks the hidden token
-    injected by {{ delete_form.hidden_tag() }} in the template.
-    Any request missing a valid token is rejected with a 400.
-
-    Deletion order:
-        1. Fetch and verify ownership.
-        2. Save the file_path before the ORM object is deleted.
-        3. Delete the database row and commit.
-        4. Delete the file from disk.
-    The DB row is deleted first. If disk deletion fails, the document
-    is already gone from the user's perspective — the orphaned file
-    is a minor disk-management concern, not a security or data issue.
+    CSRF protection: validate_on_submit() checks the hidden token.
     """
     # ── CSRF validation ───────────────────────────────────────────────────
-    # DeleteForm has no fields, but validate_on_submit() checks that:
-    #   - The request method is POST.
-    #   - The CSRF token in the submitted form matches the session token.
-    # If validation fails, abort with 400 Bad Request.
     form = DeleteForm()
     if not form.validate_on_submit():
         abort(400)
 
     # ── Ownership check (IDOR protection) ─────────────────────────────────
-    # filter_by with BOTH id AND user_id means a logged-in user can only
-    # delete a document if they own it.
-    # first_or_404() returns 404 if no matching row is found — this covers:
-    #   - The document does not exist.
-    #   - The document belongs to a different user.
-    # Both cases look identical to the requester (404), which is correct.
     doc = Document.query.filter_by(
         id=doc_id,
         user_id=current_user.id,
     ).first_or_404()
 
     # ── Save file path before deleting the ORM object ─────────────────────
-    # After db.session.delete(doc) and commit(), the 'doc' object is
-    # detached from the session and its attributes may not be accessible.
-    # Capture file_path now while the object is still fully loaded.
     file_path = doc.file_path
 
     # ── Delete the database row ───────────────────────────────────────────
     db.session.delete(doc)
     db.session.commit()
-    # The document is now permanently removed from the database.
-    # Any Reminder rows linked to this document have document_id set to
-    # NULL by the database's SET NULL cascade (defined in reminder.py).
 
     # ── Delete the file from disk ──────────────────────────────────────────
-    # delete_file() silently ignores FileNotFoundError — the DB row is
-    # already gone, so a missing file is not a problem.
     delete_file(
         upload_folder=app.config['UPLOAD_FOLDER'],
         file_path=file_path,
@@ -320,14 +276,10 @@ def serve_file(user_id, filename):
     Two-layer IDOR check:
       Layer 1: URL user_id must equal current_user.id.
       Layer 2: Document row must exist with matching user_id and file_path.
-
-    send_from_directory() safely serves from the user's subfolder.
     """
-    # ── Layer 1: Integer comparison — no DB hit needed ────────────────────
     if user_id != current_user.id:
         abort(403)
 
-    # ── Layer 2: DB ownership verification ───────────────────────────────
     file_path = os.path.join(str(user_id), filename)
 
     Document.query.filter_by(
@@ -335,7 +287,6 @@ def serve_file(user_id, filename):
         user_id=current_user.id,
     ).first_or_404()
 
-    # ── Serve ─────────────────────────────────────────────────────────────
     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(user_id))
 
     return send_from_directory(user_folder, filename)
