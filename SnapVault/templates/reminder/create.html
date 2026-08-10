@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}New Reminder - SnapVault{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                    <h4 class="mb-0"><i class="bi bi-bell-plus text-primary me-2"></i>Set a Reminder</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.title.label(class="form-label fw-bold") }}
+                            {{ form.title(class="form-control", placeholder="E.g., Pay Electricity Bill") }}
+                            {% for error in form.title.errors %}
+                                <span class="text-danger small">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.due_date.label(class="form-label fw-bold") }}
+                            {{ form.due_date(class="form-control", type="date") }}
+                            {% for error in form.due_date.errors %}
+                                <span class="text-danger small">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mb-4">
+                            {{ form.document_id.label(class="form-label fw-bold") }}
+                            {{ form.document_id(class="form-select") }}
+                            <div class="form-text">Optionally link this reminder to a document you've uploaded.</div>
+                            {% for error in form.document_id.errors %}
+                                <span class="text-danger small">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                            <a href="{{ url_for('reminder_list') }}" class="btn btn-light">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}My Reminders - SnapVault{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-bell text-warning me-2"></i>My Reminders</h2>
+        <a href="{{ url_for('create_reminder') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>New Reminder
+        </a>
+    </div>
+
+    <div class="row">
+        {% if reminders %}
+            {% for reminder in reminders %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm {% if reminder.status == 'completed' %}border-success{% else %}border-warning{% endif %}">
+                    <div class="card-body">
+                        <h5 class="card-title 
+                            {% if reminder.status == 'completed' %}text-muted text-decoration-line-through{% endif %}">
+                            {{ reminder.title }}
+                        </h5>
+                        
+                        <p class="card-text mb-2">
+                            <strong>Due:</strong> 
+                            <span class="{% if reminder.status != 'completed' and reminder.due_date.strftime('%Y-%m-%d') < today_date %}text-danger fw-bold{% endif %}">
+                                {{ reminder.due_date.strftime('%b %d, %Y') }}
+                            </span>
+                        </p>
+
+                        {% if reminder.document_id %}
+                        <p class="card-text mb-3">
+                            <small class="text-muted">
+                                <i class="bi bi-paperclip me-1"></i>Linked Document attached
+                            </small>
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-white border-top-0 d-flex justify-content-between">
+                        {% if reminder.status != 'completed' %}
+                            <form action="{{ url_for('complete_reminder', reminder_id=reminder.id) }}" method="POST" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-check2-circle me-1"></i>Complete
+                                </button>
+                            </form>
+                        {% else %}
+                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Completed</span>
+                        {% endif %}
+
+                        <form action="{{ url_for('delete_reminder', reminder_id=reminder.id) }}" method="POST" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this reminder?');">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <div class="text-muted mb-3">
+                    <i class="bi bi-bell-slash" style="font-size: 3rem;"></i>
+                </div>
+                <h5>No Reminders Yet</h5>
+                <p class="text-muted">Stay on top of your bills and renewals by adding a reminder.</p>
+                <a href="{{ url_for('create_reminder') }}" class="btn btn-outline-primary mt-2">Create your first reminder</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
