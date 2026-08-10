@@ -168,20 +168,14 @@
                     </div>
                 </div>
 
-                {# ── Action buttons ────────────────────────────────────── #}
-                <div class="d-grid gap-2 mt-3">
-
-                    {# Reminder button — stays disabled until Day 5 #}
-                    <button class="btn btn-outline-secondary btn-sm"
-                            disabled
-                            title="Reminders are available from Day 5"
-                            id="add-reminder-btn">
+                    {# ── Reminder button ───────────────────────────────── #}
+                    <a href="{{ url_for('create_reminder', doc_id=document.id) }}"
+                       class="btn btn-outline-primary btn-sm"
+                       id="add-reminder-btn">
                         <i class="bi bi-bell me-1"></i>
                         Set a Reminder
-                        <span class="badge bg-secondary ms-1"
-                              style="font-size: .65rem;">Soon</span>
-                    </button>
-
+                    </a>
+                    
                     {# ── Delete button ─────────────────────────────────── #}
                     {#
                       The delete action is a POST form, NOT a plain link.
