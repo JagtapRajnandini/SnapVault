@@ -29,11 +29,6 @@
             <div class="col-12 col-md-5">
 
                 {# ── Image preview ─────────────────────────────────────── #}
-                {#
-                  The image is served via the authenticated serve_file route.
-                  Direct access to /uploads/ is not possible — every request
-                  passes through the ownership check in document_routes.py.
-                #}
                 <div class="card shadow-sm border-0 mb-3">
                     <div class="card-body p-2 text-center bg-light rounded">
                         <img
@@ -150,10 +145,6 @@
                             </li>
 
                             {# Uploaded date #}
-                            {#
-                              FIXED: was document.created_at (wrong column name).
-                              The Document model defines this column as 'uploaded_at'.
-                            #}
                             <li class="list-group-item px-0 py-2 d-flex
                                         justify-content-between align-items-center">
                                 <span class="text-muted small">
@@ -168,6 +159,9 @@
                     </div>
                 </div>
 
+                {# ── Action buttons ────────────────────────────────────── #}
+                <div class="d-grid gap-2 mt-3">
+
                     {# ── Reminder button ───────────────────────────────── #}
                     <a href="{{ url_for('create_reminder', doc_id=document.id) }}"
                        class="btn btn-outline-primary btn-sm"
@@ -177,26 +171,6 @@
                     </a>
                     
                     {# ── Delete button ─────────────────────────────────── #}
-                    {#
-                      The delete action is a POST form, NOT a plain link.
-                      Using a link (<a href="/document/5/delete">) would be
-                      a security flaw — a malicious email containing
-                      <img src="/document/5/delete"> would silently delete
-                      documents every time a logged-in user opened that email.
-
-                      POST requires the browser to make an intentional form
-                      submission, not a passive GET request.
-
-                      delete_form.hidden_tag() renders the hidden CSRF token:
-                        <input type="hidden" name="csrf_token" value="...">
-                      Flask-WTF validates this token in the delete route's
-                      validate_on_submit() call and rejects any request
-                      that does not carry a valid token.
-
-                      data-bs-toggle="modal" triggers Bootstrap's confirm
-                      dialog before the form is submitted — gives the user
-                      a chance to cancel before the irreversible action runs.
-                    #}
                     <button type="button"
                             class="btn btn-outline-danger btn-sm"
                             id="delete-trigger-btn"
@@ -269,14 +243,6 @@
 
 {# ══════════════════════════════════════════════════════════════════════════ #}
 {# Delete Confirmation Modal                                                  #}
-{#                                                                            #}
-{# A Bootstrap modal dialog that asks the user to confirm deletion.           #}
-{# The "Delete" button inside the modal submits the hidden POST form.         #}
-{# The "Cancel" button closes the modal — no action is taken.                 #}
-{#                                                                            #}
-{# Why a modal?                                                               #}
-{#   Deletion is irreversible. A confirmation step prevents accidental clicks.#}
-{#   The form action only fires after the user explicitly confirms.           #}
 {# ══════════════════════════════════════════════════════════════════════════ #}
 
 <div class="modal fade"
@@ -315,8 +281,6 @@
             </div>
 
             <div class="modal-footer border-0 pt-0">
-
-                {# Cancel — closes modal, no action taken #}
                 <button type="button"
                         class="btn btn-secondary btn-sm"
                         data-bs-dismiss="modal"
@@ -324,12 +288,6 @@
                     Cancel
                 </button>
 
-                {#
-                  The actual delete form.
-                  action points to the POST-only delete_document_page route.
-                  delete_form.hidden_tag() embeds the CSRF token.
-                  Submitting this form is the only way to trigger deletion.
-                #}
                 <form method="POST"
                       action="{{ url_for('delete_document_page',
                                          doc_id=document.id) }}"
